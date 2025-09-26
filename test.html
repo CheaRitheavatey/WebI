@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Interactive Art Gallery</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            overflow: hidden;
+            background-color: #1a1a2e;
+            color: #e6e6e6;
+        }
+
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        #ui-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .control-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 15px 25px;
+            border-radius: 10px;
+            display: flex;
+            gap: 15px;
+            pointer-events: all;
+        }
+
+        button {
+            background-color: #4a4a8a;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background-color: #5a5aaa;
+        }
+
+        .music-control {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 50%;
+            pointer-events: all;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .artwork-modal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.9);
+            width: 80%;
+            max-width: 800px;
+            height: 80%;
+            border-radius: 10px;
+            padding: 30px;
+            display: none;
+            flex-direction: column;
+            pointer-events: all;
+            z-index: 10;
+        }
+
+        .artwork-modal.active {
+            display: flex;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-content {
+            display: flex;
+            flex: 1;
+            gap: 30px;
+            overflow: hidden;
+        }
+
+        .artwork-image {
+            flex: 1;
+            background-color: #2a2a3e;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .artwork-image img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .artwork-details {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .artwork-details h3 {
+            margin-bottom: 10px;
+            color: #c9a959;
+        }
+
+        .artwork-details p {
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .upload-modal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.9);
+            width: 500px;
+            border-radius: 10px;
+            padding: 30px;
+            display: none;
+            flex-direction: column;
+            pointer-events: all;
+            z-index: 10;
+        }
+
+        .upload-modal.active {
+            display: flex;
+        }
+
+        .upload-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .upload-form input,
+        .upload-form textarea {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #4a4a8a;
+            background-color: #2a2a3e;
+            color: white;
+        }
+
+        .upload-form textarea {
+            height: 100px;
+            resize: vertical;
+        }
+
+        .instructions {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            max-width: 300px;
+            pointer-events: none;
+        }
+
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #c9a959;
+        }
+
+        .instructions p {
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .notification {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(76, 175, 80, 0.9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: none;
+            pointer-events: none;
+            z-index: 11;
+        }
+
+        .notification.active {
+            display: block;
+            animation: fadeInOut 3s forwards;
+        }
+
+        @keyframes fadeInOut {
+            0% {
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            90% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="canvas-container"></div>
+
+    <div id="ui-container">
+        <div class="instructions">
+            <h3>Gallery Controls</h3>
+            <p>WASD or Arrow Keys: Move</p>
+            <p>Mouse: Look around</p>
+            <p>Click on artwork: View details</p>
+        </div>
+
+        <div class="music-control">
+            <button id="music-toggle">🔊</button>
+        </div>
+
+        <div class="control-panel">
+            <button id="upload-btn">Upload Artwork</button>
+            <button id="reset-view">Reset View</button>
+            <button id="fullscreen">Fullscreen</button>
+        </div>
+
+        <div class="artwork-modal" id="artwork-modal">
+            <div class="modal-header">
+                <h2 id="artwork-title">Artwork Title</h2>
+                <button class="close-btn" id="close-modal">×</button>
+            </div>
+            <div class="modal-content">
+                <div class="artwork-image">
+                    <img id="artwork-img" src="" alt="Artwork">
+                </div>
+                <div class="artwork-details">
+                    <h3>Description</h3>
+                    <p id="artwork-description">Artwork description goes here.</p>
+                    <h3>Artist</h3>
+                    <p id="artwork-artist">Artist name</p>
+                    <h3>Year</h3>
+                    <p id="artwork-year">Year created</p>
+                    <h3>Medium</h3>
+                    <p id="artwork-medium">Art medium</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="upload-modal" id="upload-modal">
+            <div class="modal-header">
+                <h2>Upload Your Artwork</h2>
+                <button class="close-btn" id="close-upload">×</button>
+            </div>
+            <form class="upload-form" id="upload-form">
+                <input type="text" id="art-title" placeholder="Artwork Title" required>
+                <input type="text" id="art-artist" placeholder="Artist Name" required>
+                <input type="number" id="art-year" placeholder="Year Created" min="1000" max="2099" required>
+                <input type="text" id="art-medium" placeholder="Medium (e.g., Oil on Canvas)" required>
+                <textarea id="art-description" placeholder="Description" required></textarea>
+                <input type="file" id="art-image" accept="image/*" required>
+                <button type="submit">Upload Artwork</button>
+            </form>
+        </div>
+
+        <div class="notification" id="notification">
+            Artwork uploaded successfully!
+        </div>
+    </div>
+
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- OrbitControls for camera control -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/controls/PointerLockControls.js"></script>
+
+    <script>
+        // Main variables
+        let scene, camera, renderer, controls;
+        let artworks = [];
+        let isMusicPlaying = false;
+        let audio;
+
+        // Initialize the scene
+        function init() {
+            // Create scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a1a2e);
+
+            // Create camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 1.6, 5);
+
+            // Create renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            // Add lighting
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            directionalLight.castShadow = true;
+            scene.add(directionalLight);
+
+            // Create gallery structure
+            createGallery();
+
+            // Add initial artworks
+            addSampleArtworks();
+
+            // Add controls
+            setupControls();
+
+            // Add background music
+            setupAudio();
+
+            // Handle window resize
+            window.addEventListener('resize', onWindowResize);
+
+            // Start animation loop
+            animate();
+        }
+
+        // Create the gallery structure
+        function createGallery() {
+            // Floor
+            const floorGeometry = new THREE.PlaneGeometry(50, 30);
+            const floorMaterial = new THREE.MeshStandardMaterial({
+                color: 0x2a2a3e,
+                roughness: 0.8,
+                metalness: 0.2
+            });
+            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.rotation.x = -Math.PI / 2;
+            floor.receiveShadow = true;
+            scene.add(floor);
+
+            // Walls
+            const wallMaterial = new THREE.MeshStandardMaterial({
+                color: 0x3a3a4e,
+                roughness: 0.7,
+                metalness: 0.1
+            });
+
+            // Back wall
+            const backWallGeometry = new THREE.PlaneGeometry(50, 10);
+            const backWall = new THREE.Mesh(backWallGeometry, wallMaterial);
+            backWall.position.set(0, 5, -15);
+            backWall.receiveShadow = true;
+            scene.add(backWall);
+
+            // Left wall
+            const leftWallGeometry = new THREE.PlaneGeometry(30, 10);
+            const leftWall = new THREE.Mesh(leftWallGeometry, wallMaterial);
+            leftWall.position.set(-25, 5, 0);
+            leftWall.rotation.y = Math.PI / 2;
+            leftWall.receiveShadow = true;
+            scene.add(leftWall);
+
+            // Right wall
+            const rightWallGeometry = new THREE.PlaneGeometry(30, 10);
+            const rightWall = new THREE.Mesh(rightWallGeometry, wallMaterial);
+            rightWall.position.set(25, 5, 0);
+            rightWall.rotation.y = -Math.PI / 2;
+            rightWall.receiveShadow = true;
+            scene.add(rightWall);
+
+            // Ceiling
+            const ceilingGeometry = new THREE.PlaneGeometry(50, 30);
+            const ceilingMaterial = new THREE.MeshStandardMaterial({
+                color: 0x2a2a3e,
+                roughness: 0.9,
+                metalness: 0.1
+            });
+            const ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
+            ceiling.position.set(0, 10, 0);
+            ceiling.rotation.x = Math.PI / 2;
+            ceiling.receiveShadow = true;
+            scene.add(ceiling);
+
+            // Add some decorative elements
+            addGalleryDetails();
+        }
+
+        // Add gallery details like frames, lights, etc.
+        function addGalleryDetails() {
+            // Picture frames on walls
+            const frameGeometry = new THREE.BoxGeometry(4, 3, 0.1);
+            const frameMaterial = new THREE.MeshStandardMaterial({
+                color: 0xc9a959,
+                roughness: 0.4,
+                metalness: 0.6
+            });
+
+            // Add frames to back wall
+            for (let i = -4; i <= 4; i += 2) {
+                const frame = new THREE.Mesh(frameGeometry, frameMaterial);
+                frame.position.set(i * 4, 5, -14.9);
+                frame.castShadow = true;
+                scene.add(frame);
+            }
+
+            // Add frames to side walls
+            for (let i = -3; i <= 3; i += 2) {
+                // Left wall frames
+                const leftFrame = new THREE.Mesh(frameGeometry, frameMaterial);
+                leftFrame.position.set(-24.9, 5, i * 3);
+                leftFrame.rotation.y = Math.PI / 2;
+                leftFrame.castShadow = true;
+                scene.add(leftFrame);
+
+                // Right wall frames
+                const rightFrame = new THREE.Mesh(frameGeometry, frameMaterial);
+                rightFrame.position.set(24.9, 5, i * 3);
+                rightFrame.rotation.y = -Math.PI / 2;
+                rightFrame.castShadow = true;
+                scene.add(rightFrame);
+            }
+
+            // Add ceiling lights
+            const lightGeometry = new THREE.SphereGeometry(0.5, 16, 16);
+            const lightMaterial = new THREE.MeshBasicMaterial({ color: 0xffffcc });
+
+            for (let i = -4; i <= 4; i += 2) {
+                for (let j = -3; j <= 3; j += 2) {
+                    const lightBulb = new THREE.Mesh(lightGeometry, lightMaterial);
+                    lightBulb.position.set(i * 4, 9.5, j * 3);
+                    scene.add(lightBulb);
+
+                    // Add point light
+                    const pointLight = new THREE.PointLight(0xffffcc, 0.5, 10);
+                    pointLight.position.set(i * 4, 9, j * 3);
+                    scene.add(pointLight);
+                }
+            }
+        }
+
+        // Add sample artworks to the gallery
+        function addSampleArtworks() {
+            // Sample artwork data
+            const sampleArtworks = [
+                {
+                    title: "Starry Night",
+                    artist: "Vincent van Gogh",
+                    year: 1889,
+                    medium: "Oil on canvas",
+                    description: "A famous painting depicting a swirling night sky over a quiet town.",
+                    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/800px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg",
+                    position: { x: -8, y: 5, z: -14.8 },
+                    rotation: { y: 0 }
+                },
+                {
+                    title: "The Persistence of Memory",
+                    artist: "Salvador Dalí",
+                    year: 1931,
+                    medium: "Oil on canvas",
+                    description: "Surrealist artwork featuring melting clocks in a desert landscape.",
+                    imageUrl: "https://upload.wikimedia.org/wikipedia/en/d/dd/The_Persistence_of_Memory.jpg",
+                    position: { x: 0, y: 5, z: -14.8 },
+                    rotation: { y: 0 }
+                },
+                {
+                    title: "Girl with a Pearl Earring",
+                    artist: "Johannes Vermeer",
+                    year: 1665,
+                    medium: "Oil on canvas",
+                    description: "A tronie of a girl wearing a headscarf and a pearl earring.",
+                    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/1665_Girl_with_a_Pearl_Earring.jpg/800px-1665_Girl_with_a_Pearl_Earring.jpg",
+                    position: { x: 8, y: 5, z: -14.8 },
+                    rotation: { y: 0 }
+                },
+                {
+                    title: "The Great Wave off Kanagawa",
+                    artist: "Hokusai",
+                    year: 1831,
+                    medium: "Woodblock print",
+                    description: "A famous Japanese woodblock print depicting a giant wave threatening boats.",
+                    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/The_Great_Wave_off_Kanagawa.jpg/800px-The_Great_Wave_off_Kanagawa.jpg",
+                    position: { x: -24.8, y: 5, z: -6 },
+                    rotation: { y: Math.PI / 2 }
+                },
+                {
+                    title: "The Birth of Venus",
+                    artist: "Sandro Botticelli",
+                    year: 1485,
+                    medium: "Tempera on canvas",
+                    description: "A painting depicting the goddess Venus arriving at the shore after her birth.",
+                    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Sandro_Botticelli_-_La_nascita_di_Venere_-_Google_Art_Project_-_edited.jpg/800px-Sandro_Botticelli_-_La_nascita_di_Venere_-_Google_Art_Project_-_edited.jpg",
+                    position: { x: 24.8, y: 5, z: 6 },
+                    rotation: { y: -Math.PI / 2 }
+                }
+            ];
+
+            // Create artwork objects
+            sampleArtworks.forEach(artData => {
+                createArtwork(artData);
+            });
+        }
+
+        // Create an artwork in the scene
+        function createArtwork(artData) {
+            // Create a frame for the artwork
+            const frameGeometry = new THREE.BoxGeometry(3.8, 2.8, 0.1);
+            const frameMaterial = new THREE.MeshStandardMaterial({
+                color: 0x4a4a6a,
+                roughness: 0.5,
+                metalness: 0.3
+            });
+            const frame = new THREE.Mesh(frameGeometry, frameMaterial);
+            frame.position.set(artData.position.x, artData.position.y, artData.position.z);
+            frame.rotation.y = artData.rotation.y;
+            frame.castShadow = true;
+            frame.receiveShadow = true;
+
+            // Create artwork image
+            const textureLoader = new THREE.TextureLoader();
+            textureLoader.load(artData.imageUrl, function (texture) {
+                const artworkGeometry = new THREE.PlaneGeometry(3.6, 2.6);
+                const artworkMaterial = new THREE.MeshStandardMaterial({
+                    map: texture,
+                    side: THREE.DoubleSide
+                });
+                const artwork = new THREE.Mesh(artworkGeometry, artworkMaterial);
+                artwork.position.set(0, 0, 0.06);
+                frame.add(artwork);
+            });
+
+            // Add click event to the artwork
+            frame.userData = artData;
+            frame.userData.isArtwork = true;
+
+            scene.add(frame);
+            artworks.push(frame);
+        }
+
+        // Set up camera controls
+        function setupControls() {
+            controls = new THREE.PointerLockControls(camera, document.body);
+
+            // Pointer lock controls
+            const blocker = document.getElementById('canvas-container');
+            const instructions = document.querySelector('.instructions');
+
+            blocker.addEventListener('click', function () {
+                controls.lock();
+            });
+
+            controls.addEventListener('lock', function () {
+                instructions.style.display = 'none';
+            });
+
+            controls.addEventListener('unlock', function () {
+                instructions.style.display = 'block';
+            });
+
+            // Movement variables
+            const moveForward = false;
+            const moveBackward = false;
+            const moveLeft = false;
+            const moveRight = false;
+            const velocity = new THREE.Vector3();
+            const direction = new THREE.Vector3();
+
+            // Keyboard controls
+            const onKeyDown = function (event) {
+                switch (event.code) {
+                    case 'ArrowUp':
+                    case 'KeyW':
+                        moveForward = true;
+                        break;
+                    case 'ArrowLeft':
+                    case 'KeyA':
+                        moveLeft = true;
+                        break;
+                    case 'ArrowDown':
+                    case 'KeyS':
+                        moveBackward = true;
+                        break;
+                    case 'ArrowRight':
+                    case 'KeyD':
+                        moveRight = true;
+                        break;
+                }
+            };
+
+            const onKeyUp = function (event) {
+                switch (event.code) {
+                    case 'ArrowUp':
+                    case 'KeyW':
+                        moveForward = false;
+                        break;
+                    case 'ArrowLeft':
+                    case 'KeyA':
+                        moveLeft = false;
+                        break;
+                    case 'ArrowDown':
+                    case 'KeyS':
+                        moveBackward = false;
+                        break;
+                    case 'ArrowRight':
+                    case 'KeyD':
+                        moveRight = false;
+                        break;
+                }
+            };
+
+            document.addEventListener('keydown', onKeyDown);
+            document.addEventListener('keyup', onKeyUp);
+
+            // Raycaster for detecting clicks on artworks
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+
+            function onMouseClick(event) {
+                if (controls.isLocked === false) return;
+
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(artworks);
+
+                if (intersects.length > 0) {
+                    const artwork = intersects[0].object;
+                    if (artwork.userData.isArtwork) {
+                        showArtworkDetails(artwork.userData);
+                    }
+                }
+            }
+
+            document.addEventListener('click', onMouseClick);
+        }
+
+        // Set up background music
+        function setupAudio() {
+            audio = new Audio();
+            // Using a public domain classical music piece for background
+            audio.src = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+            audio.loop = true;
+            audio.volume = 0.3;
+
+            // Music toggle button
+            document.getElementById('music-toggle').addEventListener('click', function () {
+                if (isMusicPlaying) {
+                    audio.pause();
+                    this.textContent = "🔇";
+                } else {
+                    audio.play();
+                    this.textContent = "🔊";
+                }
+                isMusicPlaying = !isMusicPlaying;
+            });
+        }
+
+        // Show artwork details in modal
+        function showArtworkDetails(artData) {
+            document.getElementById('artwork-title').textContent = artData.title;
+            document.getElementById('artwork-img').src = artData.imageUrl;
+            document.getElementById('artwork-description').textContent = artData.description;
+            document.getElementById('artwork-artist').textContent = artData.artist;
+            document.getElementById('artwork-year').textContent = artData.year;
+            document.getElementById('artwork-medium').textContent = artData.medium;
+
+            document.getElementById('artwork-modal').classList.add('active');
+            controls.unlock();
+        }
+
+        // Handle window resize
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Update controls
+            if (controls.isLocked === true) {
+                // Simple movement logic would go here
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // UI Event Listeners
+        document.getElementById('close-modal').addEventListener('click', function () {
+            document.getElementById('artwork-modal').classList.remove('active');
+            controls.lock();
+        });
+
+        document.getElementById('upload-btn').addEventListener('click', function () {
+            document.getElementById('upload-modal').classList.add('active');
+            controls.unlock();
+        });
+
+        document.getElementById('close-upload').addEventListener('click', function () {
+            document.getElementById('upload-modal').classList.remove('active');
+            controls.lock();
+        });
+
+        document.getElementById('reset-view').addEventListener('click', function () {
+            camera.position.set(0, 1.6, 5);
+            camera.rotation.set(0, 0, 0);
+        });
+
+        document.getElementById('fullscreen').addEventListener('click', function () {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        });
+
+        // Handle artwork upload
+        document.getElementById('upload-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const title = document.getElementById('art-title').value;
+            const artist = document.getElementById('art-artist').value;
+            const year = parseInt(document.getElementById('art-year').value);
+            const medium = document.getElementById('art-medium').value;
+            const description = document.getElementById('art-description').value;
+            const imageFile = document.getElementById('art-image').files[0];
+
+            if (imageFile) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const artData = {
+                        title: title,
+                        artist: artist,
+                        year: year,
+                        medium: medium,
+                        description: description,
+                        imageUrl: e.target.result,
+                        position: { x: 0, y: 5, z: 14.8 },
+                        rotation: { y: Math.PI }
+                    };
+
+                    createArtwork(artData);
+
+                    // Reset form and close modal
+                    document.getElementById('upload-form').reset();
+                    document.getElementById('upload-modal').classList.remove('active');
+
+                    // Show notification
+                    const notification = document.getElementById('notification');
+                    notification.textContent = "Artwork uploaded successfully!";
+                    notification.classList.add('active');
+                    setTimeout(() => {
+                        notification.classList.remove('active');
+                    }, 3000);
+
+                    controls.lock();
+                };
+                reader.readAsDataURL(imageFile);
+            }
+        });
+
+        // Initialize the application
+        init();
+    </script>
+</body>
+
+</html>

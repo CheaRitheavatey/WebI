@@ -1,0 +1,74 @@
+* {
+    margin: 0;
+    box-sizing: border-box;
+    padding: 0;
+    
+}
+
+body {
+    background: black;
+}
+
+.list {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+
+    /* pop out 3d effect */
+    transform-style: preserve-3d;
+    transform: perspective(1000px);
+}
+
+.item img {
+    width: 100px;
+    
+}
+
+.item {
+    transition: 0.5s ;
+    filter: brightness(0);
+}
+
+.item:hover {
+    filter: brightness(1);
+    transform: translateZ(200px)
+
+}
+
+/* right hand side */
+
+/* next to the one that we hover */
+.item:hover + * {
+    /* filter: brightness is for light we see */
+    filter: brightness(60%);
+    transform: translateZ(150px) rotateY(40deg);
+
+}
+
+/* next to next to the one that we hover */
+.item:hover + * + *{
+    filter: brightness(40%);
+    transform: translateZ(70px) rotateY(20deg);
+
+}
+.item:hover + * + * + *  {
+    filter: brightness(20%);
+    transform: translateZ(30px) rotateY(10deg);
+
+}
+
+
+/* left hand side  */
+.item:has(+ * :hover) {
+    filter: brightness(60%);
+    transform: translateZ(150px) rotateY(-40deg);
+}
+.item:has(+ * + * :hover) {
+    filter: brightness(40%);
+    transform: translateZ(70px) rotateY(-20deg);
+}
+.item:has(+ * + * + * :hover) {
+    filter: brightness(20%);
+    transform: translateZ(30px) rotateY(-10deg);
+}

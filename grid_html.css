@@ -1,0 +1,246 @@
+:root {
+    --gray-color: #444;
+    --side-nav-width: 220px;
+}
+
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+    font-family: "Inter", Arial, sans-serif;
+}
+
+/* Change scrollbar style */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px
+}
+
+::-webkit-scrollbar-track {
+    background-color: #e1e1e1;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #ffcc00;
+    /* border-radius: 1rem; */
+}
+
+::selection {
+    background: #0f3f6f;
+    color: #fff;
+    text-shadow: 1px 1px 0 #000
+}
+
+/* === WRAPPER flex container === */
+body {
+    display: grid;
+    grid-template-columns: var(--side-nav-width) 1fr ; /*it mean 2 col 1 have size of nav width and the other one size is 1fr*/
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas: "aside header" "aside main" "aside footer";
+    min-height: 100vh;
+}
+
+/* === LEFT NAVIGATION (fixed) === */
+aside.side-nav {
+    grid-area: aside;
+    width: var(--side-nav-width);
+    min-height: 100vh;
+    background: #222;
+    color: white;
+
+    & nav {
+        position: sticky;
+        top: 0;
+    }
+}
+
+/* === RIGHT SIDE CONTENT AREA === */
+/* Header */
+header {
+    grid-area: header;
+    background: #333;
+    color: white;
+    padding: 15px;
+    text-align: center;
+    flex-shrink: 0;
+    text-align: center;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    /* this is for vertical align item */
+    align-items: center;
+    /* it move to the right side */
+    /* justify-content: space-between; */
+
+    /* nested css selector */
+    & .menu-icon {
+        position: relative;
+        cursor: pointer;
+        font-size: xx-large;
+    }
+
+    .floating-menu {
+        position: absolute;
+        right: 0;
+        top: 40px;
+        background-color: white;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        font-size: initial;
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+
+        & ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+
+            & li {
+                padding: 10px 20px;
+            }
+
+            & li a {
+                text-decoration: none;
+                color: #333;
+                display: grid;
+                grid-template-columns: auto 1fr;
+                gap: 0.5rem;
+            }
+
+            & li:hover {
+                background-color: lightgray;
+            }
+        }
+
+
+
+    }
+
+    & summary {
+        list-style: none;
+    }
+
+    & summary::-webkit-details-marker,
+    summary::marker {
+        display: none;
+    }
+}
+
+/* Main content takes remaining vertical space */
+main {
+    grid-area: main;
+    padding: 20px;
+    min-width: 0;
+}
+
+/* Footer */
+footer {
+    grid-area: footer;
+    background: #333;
+    color: white;
+    padding: 15px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+aside.side-nav div.logo {
+    padding: 25px 0 25px 15px;
+}
+
+aside.side-nav ul {
+    list-style: none;
+}
+
+aside.side-nav li:first-child {
+    border-top: 1px solid var(--gray-color);
+}
+
+aside.side-nav li {
+    border-bottom: 1px solid var(--gray-color);
+}
+
+/* Nav links as flex container (icon + text) */
+aside.side-nav a {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 15px;
+    color: #ccc;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+/* Font Awesome icons */
+aside.side-nav a i {
+    margin-right: 10px;
+    font-size: 18px;
+}
+
+/* Text inside span for independent animation */
+aside.side-nav a span {
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+
+/* Hover: only text animates, icon stays */
+aside.side-nav a:hover span {
+    color: #ffcc00;
+    transform: translateX(5px);
+}
+
+/* Hover: background of entire link */
+aside.side-nav a:hover {
+    background: var(--gray-color);
+}
+
+/* Hover: color of entire link icon */
+aside.side-nav a:hover i {
+    color: white;
+}
+
+aside.side-nav a:hover span {
+    color: #ffcc00;
+    transform: translateX(5px);
+
+}
+
+aside.side-nav a:hover {
+    background: var(--gray-color);
+
+}
+
+aside.side-nav a:hover i {
+    color: white;
+}
+
+article {
+    padding: 20px;
+}
+
+article>h2:not(h2:first-child) {
+    margin-top: 2rem;
+}
+
+article>h2 {
+    margin-bottom: 0.5rem;
+}
+
+/* tablet max size */
+@media (max-width: 768px) {
+    body {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1r auto;
+        grid-template-areas: "header" "main" "footer";
+    }
+    aside.side-nav {
+        display: none;
+    }
+
+    .menu-icon {
+        display: block;
+    }
+}
